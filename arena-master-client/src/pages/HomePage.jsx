@@ -18,7 +18,7 @@ export default function HomePage() {
       <Box
         className="bg-pattern-grid"
         style={{
-          background: 'linear-gradient(135deg, #0F0F23 0%, #1A1A3E 50%, #0F0F23 100%), linear-gradient(rgba(124, 58, 237, 0.06) 1px, transparent 1px), linear-gradient(90deg, rgba(124, 58, 237, 0.06) 1px, transparent 1px)',
+          background: 'linear-gradient(135deg, var(--color-bg) 0%, var(--color-bg-elevated) 50%, var(--color-bg) 100%), linear-gradient(rgba(124, 58, 237, 0.06) 1px, transparent 1px), linear-gradient(90deg, rgba(124, 58, 237, 0.06) 1px, transparent 1px)',
           backgroundBlendMode: 'normal',
           backgroundSize: 'auto, 48px 48px, 48px 48px',
           paddingTop: 100,
@@ -115,7 +115,6 @@ export default function HomePage() {
                 padding="lg"
                 className="hover-glow-neon"
                 style={{
-                  borderLeft: '3px solid var(--mantine-color-purple-6)',
                   textDecoration: 'none',
                 }}
               >
@@ -124,10 +123,10 @@ export default function HomePage() {
                     <Image src={uploadUrl(t.coverUrl)} h={120} alt={t.title} className="transition-all" />
                   </Card.Section>
                 )}
-                <Text fw={600} mt="sm" c="dark.0">
+                <Text fw={600} mt="sm" style={{ color: 'var(--color-text)' }}>
                   {t.title}
                 </Text>
-                <Text size="sm" c="dark.2">
+                <Text size="sm" style={{ color: 'var(--color-text-muted)' }}>
                   {t.disciplineName} · {t.participantsCount}/{t.maxParticipants}
                 </Text>
               </Card>

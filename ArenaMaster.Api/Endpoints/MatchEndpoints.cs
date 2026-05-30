@@ -3,6 +3,7 @@ using ArenaMaster.Api.Data;
 using ArenaMaster.Api.DTOs.Match;
 using ArenaMaster.Api.Helpers;
 using ArenaMaster.Api.Models;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.EntityFrameworkCore;
 
 namespace ArenaMaster.Api.Endpoints;
@@ -13,9 +14,33 @@ public static class MatchEndpoints
     {
         var group = app.MapGroup("/api/matches");
 
-        group.MapGet("/{id:guid}", GetMatch);
-        group.MapPatch("/{id:guid}/result", SubmitResult).RequireAuthorization();
-        group.MapPatch("/{id:guid}/schedule", SetSchedule).RequireAuthorization();
+        group.MapGet("/{id:guid}", GetMatch)
+            .WithSummary("Деталі матчу")
+            .WithDescription("Повертає інформацію про окремий матч: учасники, рахунок, статус, запланований та фактичний час проведення.")
+            .Produces<MatchDetailDto>(StatusCodes.Status200OK)
+            .Produces(StatusCodes.Status404NotFound)
+            .WithTags("Matches");
+
+        group.MapPatch("/{id:guid}/result", SubmitResult).RequireAuthorization()
+            .WithSummary("Внести результат матчу")
+            .WithDescription("Фіксує результат матчу, автоматично просуває переможця в сітці та сповіщає учасників. Після завершення всіх матчів турнір автоматично переводиться у статус 'finished'. Потрібна роль організатора або admin.")
+            .Accepts<MatchResultRequest>("application/json")
+            .Produces(StatusCodes.Status200OK)
+            .Produces(StatusCodes.Status400BadRequest)
+            .Produces(StatusCodes.Status401Unauthorized)
+            .Produces(StatusCodes.Status403Forbidden)
+            .Produces(StatusCodes.Status404NotFound)
+            .WithTags("Matches");
+
+        group.MapPatch("/{id:guid}/schedule", SetSchedule).RequireAuthorization()
+            .WithSummary("Запланувати матч")
+            .WithDescription("Встановлює дату та час проведення матчу. Потрібна роль організатора або admin.")
+            .Accepts<MatchScheduleRequest>("application/json")
+            .Produces(StatusCodes.Status200OK)
+            .Produces(StatusCodes.Status401Unauthorized)
+            .Produces(StatusCodes.Status403Forbidden)
+            .Produces(StatusCodes.Status404NotFound)
+            .WithTags("Matches");
     }
 
     private static async Task<IResult> GetMatch(Guid id, AppDbContext db)

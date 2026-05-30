@@ -25,7 +25,6 @@ export default function ProfilePage() {
         border: '1px solid var(--color-border)',
         borderRadius: 'var(--radius-card)',
         padding: 24,
-        borderLeft: '3px solid var(--color-primary)',
       }}>
         <Avatar
           src={uploadUrl(profile.avatarUrl)}
@@ -85,15 +84,12 @@ export default function ProfilePage() {
         </Tabs.List>
         <Tabs.Panel value="tournaments" pt="md">
           <Stack gap="sm">
-            {(history ?? []).map((t) => (
+              {(history ?? []).map((t) => (
               <div
                 key={t.tournamentId}
                 style={{
-                  background: 'var(--color-bg-card)',
-                  border: '1px solid var(--color-border)',
                   borderRadius: 8,
                   padding: 12,
-                  borderLeft: '3px solid var(--color-primary)',
                   transition: 'all var(--transition-normal)',
                 }}
               >
@@ -114,15 +110,12 @@ export default function ProfilePage() {
         </Tabs.Panel>
         <Tabs.Panel value="teams" pt="md">
           <Stack gap="sm">
-            {(data.teams ?? []).map((t) => (
+              {(data.teams ?? []).map((t) => (
               <div
                 key={t.id}
                 style={{
-                  background: 'var(--color-bg-card)',
-                  border: '1px solid var(--color-border)',
                   borderRadius: 8,
                   padding: 12,
-                  borderLeft: '3px solid var(--color-primary)',
                   transition: 'all var(--transition-normal)',
                 }}
               >

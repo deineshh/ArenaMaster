@@ -12,7 +12,6 @@ export function ParticipantsList({ participants }) {
           border: '1px solid var(--color-border)',
           borderRadius: 8,
           padding: '10px 16px',
-          borderLeft: '3px solid var(--color-primary)',
         }}>
           <Avatar src={uploadUrl(p.avatarUrl)} radius="xl" />
           <div>

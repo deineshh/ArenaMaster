@@ -18,7 +18,7 @@ builder.Configuration.AddEnvironmentVariables();
 
 var connectionString = builder.Configuration["DATABASE_URL"]
     ?? builder.Configuration.GetConnectionString("DefaultConnection")
-    ?? "Host=localhost;Database=arenamaster;Username=postgres;Password=postgres";
+    ?? "Host=localhost;Port=3753;Database=arenamaster;Username=postgres;Password=postgres";
 
 var dataSourceBuilder = new NpgsqlDataSourceBuilder(connectionString);
 dataSourceBuilder.EnableDynamicJson();
@@ -96,7 +96,22 @@ if (!string.IsNullOrEmpty(discordClientId))
 }
 
 builder.Services.AddAuthorization();
-builder.Services.AddOpenApi();
+builder.Services.AddOpenApi(options =>
+{
+    options.AddDocumentTransformer((document, context, cancellationToken) =>
+    {
+        document.Info = new()
+        {
+            Title = "ArenaMaster API",
+            Version = "1.0.0",
+            Description = "API для платформи організації аматорських кіберспортивних турнірів.\n\n" +
+                "Підтримує керування турнірами, командами, гравцями, брекетами, сповіщеннями. " +
+                "Аутентифікація через JWT cookies + OAuth (Google/Discord).",
+            Contact = new() { Name = "ArenaMaster Support" }
+        };
+        return Task.CompletedTask;
+    });
+});
 
 var frontendUrl = builder.Configuration["FRONTEND_URL"] ?? "http://localhost:5173";
 builder.Services.AddCors(options =>
@@ -116,28 +131,57 @@ using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
     var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
-    for (var i = 0; i < 10; i++)
+    for (var i = 0; i < 15; i++)
     {
         try
         {
             await db.Database.MigrateAsync();
             break;
         }
-        catch (Npgsql.NpgsqlException ex) when (i < 9)
+        catch (Npgsql.NpgsqlException ex)
         {
-            logger.LogWarning(ex, "Database not ready, retrying in 2s... ({Attempt}/10)", i + 1);
+            if (ex is Npgsql.PostgresException pg && pg.SqlState == "3D000" && i == 0)
+            {
+                logger.LogInformation("Database not found, creating...");
+                await db.Database.EnsureCreatedAsync();
+                continue;
+            }
+            if (i >= 14) throw;
+            logger.LogWarning(ex, "DB not ready, retry {I}/15", i + 1);
             await Task.Delay(2000);
         }
     }
     if (app.Environment.IsDevelopment())
-        await DataSeeder.SeedAsync(db);
+    {
+        var unsplash = scope.ServiceProvider.GetRequiredService<UnsplashClient>();
+        await DataSeeder.SeedAsync(db, unsplash);
+    }
 }
 
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
-    app.MapScalarApiReference();
+    app.MapScalarApiReference(options =>
+    {
+        options
+            .WithTitle("ArenaMaster API")
+            .WithTheme(ScalarTheme.Purple)
+            .WithDarkModeToggle(false)
+            .WithDefaultHttpClient(ScalarTarget.CSharp, ScalarClient.HttpClient)
+            .WithPreferredScheme("bearer");
+    });
 }
+
+app.Use(async (context, next) =>
+{
+    if (context.Request.Path.StartsWithSegments("/api"))
+    {
+        context.Response.Headers["Cache-Control"] = "no-cache, no-store, must-revalidate";
+        context.Response.Headers["Pragma"] = "no-cache";
+        context.Response.Headers["Expires"] = "0";
+    }
+    await next();
+});
 
 app.UseCors();
 app.UseStaticFiles(new StaticFileOptions

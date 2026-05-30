@@ -6,6 +6,7 @@ using ArenaMaster.Api.Models;
 using ArenaMaster.Api.Validators;
 using FluentValidation;
 using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -17,13 +18,53 @@ public static class AuthEndpoints
     {
         var group = app.MapGroup("/api/auth");
 
-        group.MapPost("/register", Register);
-        group.MapPost("/login", Login);
-        group.MapPost("/refresh", Refresh);
-        group.MapPost("/logout", Logout).RequireAuthorization();
-        group.MapGet("/confirm-email", ConfirmEmail);
-        group.MapGet("/oauth/{provider}", InitiateOAuth);
-        group.MapGet("/oauth/{provider}/callback", OAuthCallback);
+        group.MapPost("/register", Register)
+            .WithSummary("Реєстрація нового користувача")
+            .WithDescription("Створює новий акаунт із автоматичним генеруванням аватара. Якщо SMTP налаштовано, надсилає лист із підтвердженням email.")
+            .Produces<RegisterResponse>(StatusCodes.Status200OK)
+            .Produces<HttpValidationProblemDetails>(StatusCodes.Status400BadRequest)
+            .WithTags("Auth");
+
+        group.MapPost("/login", Login)
+            .WithSummary("Вхід у систему")
+            .WithDescription("Аутентифікація за email та паролем. У разі успіху встановлює HttpOnly cookies (access_token + refresh_token) та повертає дані користувача.")
+            .Produces<AuthUserDto>(StatusCodes.Status200OK)
+            .Produces<HttpValidationProblemDetails>(StatusCodes.Status400BadRequest)
+            .Produces(StatusCodes.Status401Unauthorized)
+            .WithTags("Auth");
+
+        group.MapPost("/refresh", Refresh)
+            .WithSummary("Оновлення токенів доступу")
+            .WithDescription("Обмінює refresh_token (із cookies) на нову пару access_token + refresh_token. Якщо токен відкликано, анулює всі токени користувача.")
+            .Produces<AuthUserDto>(StatusCodes.Status200OK)
+            .Produces(StatusCodes.Status401Unauthorized)
+            .WithTags("Auth");
+
+        group.MapPost("/logout", Logout).RequireAuthorization()
+            .WithSummary("Вихід із системи")
+            .WithDescription("Відкликає поточний refresh_token та очищає auth cookies.")
+            .Produces<LogoutResponse>(StatusCodes.Status200OK)
+            .WithTags("Auth");
+
+        group.MapGet("/confirm-email", ConfirmEmail)
+            .WithSummary("Підтвердження електронної пошти")
+            .WithDescription("Підтверджує email користувача за допомогою токена, отриманого в листі.")
+            .Produces<ConfirmEmailResponse>(StatusCodes.Status200OK)
+            .Produces(StatusCodes.Status400BadRequest)
+            .WithTags("Auth");
+
+        group.MapGet("/oauth/{provider}", InitiateOAuth)
+            .WithSummary("Авторизація через OAuth (Google/Discord)")
+            .WithDescription("Перенаправляє на сторінку входу OAuth-провайдера. Підтримувані провайдери: `google`, `discord`.")
+            .Produces(StatusCodes.Status302Found)
+            .Produces(StatusCodes.Status400BadRequest)
+            .WithTags("Auth");
+
+        group.MapGet("/oauth/{provider}/callback", OAuthCallback)
+            .WithSummary("Callback OAuth-авторизації")
+            .WithDescription("Внутрішній ендпоінт для обробки відповіді OAuth-провайдера. Створює нового або автентифікує існуючого користувача, після чого перенаправляє на фронтенд.")
+            .Produces(StatusCodes.Status302Found)
+            .WithTags("Auth");
     }
 
     private static async Task<IResult> Register(
@@ -63,10 +104,10 @@ public static class AuthEndpoints
         await db.SaveChangesAsync();
 
         if (string.IsNullOrWhiteSpace(smtp.User))
-            return Results.Ok(new { message = "Реєстрація успішна. Email підтверджено автоматично." });
+            return Results.Ok(new RegisterResponse("Реєстрація успішна. Email підтверджено автоматично."));
 
         await email.SendConfirmEmailAsync(user.Email, token);
-        return Results.Ok(new { message = "Реєстрація успішна. Перевірте email для підтвердження." });
+        return Results.Ok(new RegisterResponse("Реєстрація успішна. Перевірте email для підтвердження."));
     }
 
     private static async Task<IResult> Login(
@@ -135,7 +176,7 @@ public static class AuthEndpoints
         }
 
         CookieAuthHelper.ClearAuthCookies(ctx.Response);
-        return Results.Ok(new { message = "Вихід виконано" });
+        return Results.Ok(new LogoutResponse("Вихід виконано"));
     }
 
     private static async Task<IResult> ConfirmEmail([FromQuery] string token, AppDbContext db)
@@ -147,7 +188,7 @@ public static class AuthEndpoints
         user.EmailConfirmToken = null;
         user.UpdatedAt = DateTime.UtcNow;
         await db.SaveChangesAsync();
-        return Results.Ok(new { message = "Email підтверджено" });
+        return Results.Ok(new ConfirmEmailResponse("Email підтверджено"));
     }
 
     private static IResult InitiateOAuth(string provider, HttpContext ctx, IConfiguration config)
@@ -258,3 +299,8 @@ public static class AuthEndpoints
             baseName.Length > 50 ? baseName[..50] : baseName);
     }
 }
+
+// Named response records for OpenAPI schema generation
+public record RegisterResponse(string Message);
+public record LogoutResponse(string Message);
+public record ConfirmEmailResponse(string Message);

@@ -4,6 +4,7 @@ import { Link, useNavigate } from 'react-router';
 import { useAuth } from '../../hooks/useAuth';
 import { useLogoutMutation } from '../../api/authApi';
 import { NotificationBell } from '../../features/notifications/NotificationBell';
+import { ThemeToggle } from '../ui/ThemeToggle';
 import styles from './Header.module.css';
 
 export function Header() {
@@ -45,6 +46,7 @@ export function Header() {
         </Group>
       </Group>
       <Group>
+        <ThemeToggle />
         {isAuthenticated && <NotificationBell />}
         {isAuthenticated ? (
           <>

@@ -16,7 +16,6 @@ export default function ConfirmEmailPage() {
         style={{
           background: 'var(--color-bg-card)',
           borderColor: 'var(--color-border)',
-          borderLeft: '3px solid var(--color-primary)',
         }}
       >
         {isLoading && (

@@ -4,7 +4,7 @@ const skeletonBase = { background: 'var(--color-bg-elevated)' };
 
 function SkeletonCardBase() {
   return (
-    <div className="skeleton-pulse" style={{ borderLeft: '3px solid var(--color-border)', borderRadius: 'var(--radius-card)', overflow: 'hidden' }}>
+    <div className="skeleton-pulse" style={{ borderRadius: 'var(--radius-card)', overflow: 'hidden' }}>
       <Skeleton height={140} radius="md" mb="sm" style={skeletonBase} />
       <Skeleton height={20} width="70%" radius="sm" mb="xs" style={skeletonBase} />
       <Skeleton height={14} width="50%" radius="sm" mb="xs" style={skeletonBase} />
@@ -15,7 +15,7 @@ function SkeletonCardBase() {
 
 function SkeletonTeamCard() {
   return (
-    <div className="skeleton-pulse" style={{ borderLeft: '3px solid var(--color-border)', borderRadius: 'var(--radius-card)', padding: 16 }}>
+    <div className="skeleton-pulse" style={{ borderRadius: 'var(--radius-card)', padding: 16 }}>
       <Skeleton height={20} width="60%" radius="sm" mb="sm" style={skeletonBase} />
       <Skeleton height={14} width="40%" radius="sm" style={skeletonBase} />
     </div>

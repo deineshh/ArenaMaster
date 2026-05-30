@@ -32,14 +32,14 @@ export const pageLayout = {
 export const paperCardStyles = {
   p: 'xl',
   withBorder: true,
-  style: { borderColor: 'var(--mantine-color-dark-6)' },
+  style: { borderColor: 'var(--color-border-subtle)' },
 };
 
 export const statCardStyles = {
   withBorder: true,
   padding: 'md',
   ta: 'center',
-  style: { borderColor: 'var(--mantine-color-dark-6)' },
+  style: { borderColor: 'var(--color-border-subtle)' },
 };
 
 export const tableStyles = {

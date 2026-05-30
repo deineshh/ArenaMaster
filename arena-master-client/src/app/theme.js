@@ -27,26 +27,6 @@ export const theme = createTheme({
   },
   primaryShade: 6,
   components: {
-    Card: {
-      defaultProps: {
-        bg: 'dark.8',
-      },
-    },
-    Table: {
-      defaultProps: {
-        bg: 'dark.8',
-      },
-    },
-    Paper: {
-      defaultProps: {
-        bg: 'dark.8',
-      },
-    },
-    Modal: {
-      defaultProps: {
-        bg: 'dark.8',
-      },
-    },
     Button: {
       defaultProps: {
         className: 'transition-all',

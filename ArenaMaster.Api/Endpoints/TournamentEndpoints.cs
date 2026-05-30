@@ -6,6 +6,7 @@ using ArenaMaster.Api.Helpers;
 using ArenaMaster.Api.Models;
 using ArenaMaster.Api.Validators;
 using FluentValidation;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -17,17 +18,101 @@ public static class TournamentEndpoints
     {
         var group = app.MapGroup("/api/tournaments");
 
-        group.MapGet("/", ListTournaments);
-        group.MapPost("/", CreateTournament).RequireAuthorization();
-        group.MapGet("/{slug}", GetTournament);
-        group.MapPut("/{id:guid}", UpdateTournament).RequireAuthorization();
-        group.MapPost("/{id:guid}/cover", UploadCover).RequireAuthorization().DisableAntiforgery();
-        group.MapPatch("/{id:guid}/status", UpdateStatus).RequireAuthorization();
-        group.MapPost("/{id:guid}/participants", Register).RequireAuthorization();
-        group.MapGet("/{id:guid}/participants", ListParticipants);
-        group.MapPatch("/{id:guid}/participants/{pid:guid}/status", UpdateParticipantStatus).RequireAuthorization();
-        group.MapGet("/{id:guid}/bracket", GetBracket);
-        group.MapPost("/{id:guid}/bracket/generate", GenerateBracket).RequireAuthorization();
+        group.MapGet("/", ListTournaments)
+            .WithSummary("Список турнірів")
+            .WithDescription("Повертає пагінований список активних турнірів (чернетки не включено). Підтримує фільтрацію за дисципліною, форматом, типом учасників, статусом і пошук за назвою.")
+            .Produces<TournamentListResponse>(StatusCodes.Status200OK)
+            .WithTags("Tournaments");
+
+        group.MapPost("/", CreateTournament).RequireAuthorization()
+            .WithSummary("Створити турнір")
+            .WithDescription("Створює новий турнір у статусі 'draft'. Потрібна роль organizer або admin. Автоматично генерує обкладинку через Unsplash.")
+            .Accepts<CreateTournamentRequest>("application/json")
+            .Produces<CreateResult>(StatusCodes.Status201Created)
+            .Produces<HttpValidationProblemDetails>(StatusCodes.Status400BadRequest)
+            .Produces(StatusCodes.Status401Unauthorized)
+            .Produces(StatusCodes.Status403Forbidden)
+            .WithTags("Tournaments");
+
+        group.MapGet("/{slug}", GetTournament)
+            .WithSummary("Деталі турніру")
+            .WithDescription("Повертає повну інформацію про турнір, включно з дисципліною, організатором та призами.")
+            .Produces<TournamentDetailDto>(StatusCodes.Status200OK)
+            .Produces(StatusCodes.Status404NotFound)
+            .WithTags("Tournaments");
+
+        group.MapPut("/{id:guid}", UpdateTournament).RequireAuthorization()
+            .WithSummary("Оновити турнір")
+            .WithDescription("Оновлює поля турніру. Потрібна роль організатора або admin. Усі поля опціональні — змінюються лише надані значення.")
+            .Accepts<UpdateTournamentRequest>("application/json")
+            .Produces<TournamentDetailDto>(StatusCodes.Status200OK)
+            .Produces(StatusCodes.Status401Unauthorized)
+            .Produces(StatusCodes.Status403Forbidden)
+            .Produces(StatusCodes.Status404NotFound)
+            .WithTags("Tournaments");
+
+        group.MapPost("/{id:guid}/cover", UploadCover).RequireAuthorization().DisableAntiforgery()
+            .WithSummary("Завантажити обкладинку турніру")
+            .WithDescription("Завантажує обкладинку. Якщо файл не передано або він некоректний, автоматично підбирає зображення через Unsplash. Потрібна роль організатора або admin.")
+            .Produces<CoverUploadResponse>(StatusCodes.Status200OK)
+            .Produces(StatusCodes.Status400BadRequest)
+            .Produces(StatusCodes.Status401Unauthorized)
+            .Produces(StatusCodes.Status403Forbidden)
+            .Produces(StatusCodes.Status404NotFound)
+            .WithTags("Tournaments");
+
+        group.MapPatch("/{id:guid}/status", UpdateStatus).RequireAuthorization()
+            .WithSummary("Змінити статус турніру")
+            .WithDescription("Перемикає статус турніру. При переході з 'registration' на 'ongoing' автоматично генерує сітку матчів і сповіщає всіх учасників.")
+            .Accepts<UpdateStatusRequest>("application/json")
+            .Produces<StatusUpdateResponse>(StatusCodes.Status200OK)
+            .Produces(StatusCodes.Status401Unauthorized)
+            .Produces(StatusCodes.Status403Forbidden)
+            .Produces(StatusCodes.Status404NotFound)
+            .WithTags("Tournaments");
+
+        group.MapPost("/{id:guid}/participants", Register).RequireAuthorization()
+            .WithSummary("Зареєструватися на турнір")
+            .WithDescription("Реєструє поточного користувача (solo) або команду (team) на турнір. Якщо AutoAccept увімкнено, заявку приймають автоматично.")
+            .Accepts<RegisterParticipantRequest>("application/json")
+            .Produces(StatusCodes.Status200OK)
+            .Produces(StatusCodes.Status400BadRequest)
+            .Produces(StatusCodes.Status401Unauthorized)
+            .Produces(StatusCodes.Status403Forbidden)
+            .Produces(StatusCodes.Status404NotFound)
+            .WithTags("Tournaments");
+
+        group.MapGet("/{id:guid}/participants", ListParticipants)
+            .WithSummary("Список учасників турніру")
+            .WithDescription("Повертає список усіх зареєстрованих учасників турніру.")
+            .Produces<List<ParticipantDto>>(StatusCodes.Status200OK)
+            .WithTags("Tournaments");
+
+        group.MapPatch("/{id:guid}/participants/{pid:guid}/status", UpdateParticipantStatus).RequireAuthorization()
+            .WithSummary("Змінити статус заявки учасника")
+            .WithDescription("Приймає або відхиляє заявку учасника. Потрібна роль організатора або admin. Учаснику надсилається сповіщення.")
+            .Accepts<UpdateStatusRequest>("application/json")
+            .Produces(StatusCodes.Status200OK)
+            .Produces(StatusCodes.Status401Unauthorized)
+            .Produces(StatusCodes.Status403Forbidden)
+            .Produces(StatusCodes.Status404NotFound)
+            .WithTags("Tournaments");
+
+        group.MapGet("/{id:guid}/bracket", GetBracket)
+            .WithSummary("Сітка турніру (bracket)")
+            .WithDescription("Повертає всі матчі турніру: раунди, учасників, результати та зв'язки для наступних матчів.")
+            .Produces<List<BracketMatchDto>>(StatusCodes.Status200OK)
+            .WithTags("Tournaments");
+
+        group.MapPost("/{id:guid}/bracket/generate", GenerateBracket).RequireAuthorization()
+            .WithSummary("Згенерувати сітку матчів")
+            .WithDescription("Генерує сітку матчів для турніру на основі прийнятих учасників. Якщо сітка вже існує, повертає помилку. Потрібна роль організатора або admin.")
+            .Produces<GenerateBracketResponse>(StatusCodes.Status200OK)
+            .Produces(StatusCodes.Status400BadRequest)
+            .Produces(StatusCodes.Status401Unauthorized)
+            .Produces(StatusCodes.Status403Forbidden)
+            .Produces(StatusCodes.Status404NotFound)
+            .WithTags("Tournaments");
     }
 
     private static async Task<IResult> ListTournaments(
@@ -65,7 +150,7 @@ public static class TournamentEndpoints
                 t.MaxParticipants, t.CoverUrl))
             .ToListAsync();
 
-        return Results.Ok(new { items, total, page, pageSize });
+        return Results.Ok(new TournamentListResponse(items, total, page, pageSize));
     }
 
     private static async Task<IResult> CreateTournament(
@@ -110,7 +195,7 @@ public static class TournamentEndpoints
             tournament.CoverUrl = PlaceholderImageGenerator.WriteTournamentCover(tournament.Title, tournament.Id);
         db.Tournaments.Add(tournament);
         await db.SaveChangesAsync();
-        return Results.Created($"/api/tournaments/{tournament.Slug}", new { tournament.Id, tournament.Slug });
+        return Results.Created($"/api/tournaments/{tournament.Slug}", new CreateResult(tournament.Id, tournament.Slug));
     }
 
     private static async Task<IResult> GetTournament(string slug, AppDbContext db)
@@ -164,7 +249,7 @@ public static class TournamentEndpoints
         t.CoverUrl = path;
         t.UpdatedAt = DateTime.UtcNow;
         await db.SaveChangesAsync();
-        return Results.Ok(new { coverUrl = path });
+        return Results.Ok(new CoverUploadResponse(path));
     }
 
     private static async Task<IResult> UpdateStatus(
@@ -202,7 +287,7 @@ public static class TournamentEndpoints
         }
 
         await db.SaveChangesAsync();
-        return Results.Ok(new { t.Status });
+        return Results.Ok(new StatusUpdateResponse(t.Status));
     }
 
     private static async Task<IResult> Register(
@@ -318,15 +403,11 @@ public static class TournamentEndpoints
             .OrderBy(m => m.Round).ThenBy(m => m.MatchNumber)
             .ToListAsync();
 
-        return Results.Ok(matches.Select(m => new
-        {
+        return Results.Ok(matches.Select(m => new BracketMatchDto(
             m.Id, m.Round, m.MatchNumber, m.BracketSide,
-            m.Participant1Id,
-            Participant1Name = GetParticipantName(m.Participant1),
-            m.Participant2Id,
-            Participant2Name = GetParticipantName(m.Participant2),
-            m.Score1, m.Score2, m.WinnerId, m.Status, m.ScheduledAt, m.PlayedAt, m.NextMatchId, m.NextMatchSlot
-        }));
+            m.Participant1Id, GetParticipantName(m.Participant1),
+            m.Participant2Id, GetParticipantName(m.Participant2),
+            m.Score1, m.Score2, m.WinnerId, m.Status, m.ScheduledAt, m.PlayedAt, m.NextMatchId, m.NextMatchSlot)));
     }
 
     private static async Task<IResult> GenerateBracket(Guid id, ClaimsPrincipal principal, AppDbContext db)
@@ -345,7 +426,7 @@ public static class TournamentEndpoints
 
         db.Matches.AddRange(matches);
         await db.SaveChangesAsync();
-        return Results.Ok(new { count = matches.Count });
+        return Results.Ok(new GenerateBracketResponse(matches.Count));
     }
 
     private static bool CanManageTournament(ClaimsPrincipal principal, Tournament t) =>
@@ -380,3 +461,15 @@ public static class TournamentEndpoints
         return p.User?.Username ?? p.Team?.Name;
     }
 }
+
+public record TournamentListResponse(IReadOnlyList<TournamentListItemDto> Items, int Total, int Page, int PageSize);
+public record CoverUploadResponse(string CoverUrl);
+public record StatusUpdateResponse(string Status);
+public record GenerateBracketResponse(int Count);
+public record BracketMatchDto(
+    Guid Id, int Round, int MatchNumber, string? BracketSide,
+    Guid? Participant1Id, string? Participant1Name,
+    Guid? Participant2Id, string? Participant2Name,
+    int? Score1, int? Score2, Guid? WinnerId, string Status,
+    DateTime? ScheduledAt, DateTime? PlayedAt,
+    Guid? NextMatchId, int? NextMatchSlot);

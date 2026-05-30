@@ -35,7 +35,6 @@ export default function InvitationsPage() {
           style={{
             background: 'var(--color-bg-card)',
             borderColor: 'var(--color-border)',
-            borderLeft: '3px solid var(--color-primary)',
           }}
         >
           <Title order={2} mb="lg" className="gradient-text">
@@ -56,7 +55,6 @@ export default function InvitationsPage() {
                   style={{
                     background: 'var(--color-bg)',
                     borderColor: 'var(--color-border)',
-                    borderLeft: '3px solid var(--color-primary)',
                   }}
                 >
                   <Group justify="space-between">

@@ -11,15 +11,14 @@ export function TeamCard({ team }) {
       padding="lg"
       className="hover-glow-neon"
       style={{
-        borderLeft: '3px solid var(--mantine-color-purple-6)',
         textDecoration: 'none',
       }}
     >
       <Group>
         <Avatar src={uploadUrl(team.logoUrl)} radius="xl" size="lg" />
         <div>
-          <Text fw={600} c="dark.0">{team.name}</Text>
-          <Text size="sm" c="dark.2">
+          <Text fw={600} style={{ color: 'var(--color-text)' }}>{team.name}</Text>
+          <Text size="sm" style={{ color: 'var(--color-text-muted)' }}>
             Капітан: {team.captainUsername} · {team.memberCount} учасників
           </Text>
         </div>

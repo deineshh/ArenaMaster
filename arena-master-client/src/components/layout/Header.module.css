@@ -35,7 +35,7 @@
 
 .navLink {
   text-decoration: none;
-  color: var(--mantine-color-dark-0);
+  color: var(--color-text);
   cursor: pointer;
   transition: color var(--transition-fast);
   font-size: 0.875rem;

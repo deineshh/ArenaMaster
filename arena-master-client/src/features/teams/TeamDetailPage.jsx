@@ -39,7 +39,6 @@ export default function TeamDetailPage() {
         border: '1px solid var(--color-border)',
         borderRadius: 'var(--radius-card)',
         padding: 24,
-        borderLeft: '3px solid var(--color-primary)',
       }}>
         <Avatar src={uploadUrl(data.logoUrl)} size={80} radius="md" />
         <div>

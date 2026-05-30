@@ -5,28 +5,40 @@ namespace ArenaMaster.Api.Data.Seeders;
 
 public static class DisciplineSeeder
 {
-    public static List<Discipline> Seed(AppDbContext db)
+    private static readonly Dictionary<string, string> Queries = new()
     {
-        var names = new[]
+        ["Counter-Strike 2"]    = "counter strike 2 gameplay",
+        ["Dota 2"]              = "dota 2 arena battle",
+        ["Valorant"]            = "valorant agents gameplay",
+        ["League of Legends"]   = "league of legends rift",
+        ["FIFA / EA FC"]        = "fifa football stadium",
+        ["Rainbow Six Siege"]   = "rainbow six siege operator",
+        ["Apex Legends"]        = "apex legends battle royale",
+        ["Overwatch 2"]         = "overwatch 2 heroes",
+        ["StarCraft II"]        = "starcraft 2 protoss",
+        ["Fortnite"]            = "fortnite battle royale",
+    };
+
+    public static List<Discipline> Seed(AppDbContext db, UnsplashClient? unsplash = null)
+    {
+        var list = new List<Discipline>();
+
+        foreach (var (name, query) in Queries)
         {
-            "Counter-Strike 2",
-            "Dota 2",
-            "Valorant",
-            "League of Legends",
-            "FIFA / EA FC"
-        };
+            var id = DeterministicGuid.Create($"discipline-{name}");
+            var coverUrl = EntityImageHelper.EnsureImage(id, "disciplines", query, unsplash);
 
-        PlaceholderImageGenerator.WriteDisciplinePlaceholder();
+            var discipline = new Discipline
+            {
+                Id = id,
+                Name = name,
+                Slug = SlugHelper.Generate(name),
+                CoverUrl = coverUrl
+            };
+            db.Disciplines.Add(discipline);
+            list.Add(discipline);
+        }
 
-        var list = names.Select(n => new Discipline
-        {
-            Id = Guid.NewGuid(),
-            Name = n,
-            Slug = SlugHelper.Generate(n),
-            CoverUrl = "/uploads/disciplines/placeholder.svg"
-        }).ToList();
-
-        db.Disciplines.AddRange(list);
         return list;
     }
 }

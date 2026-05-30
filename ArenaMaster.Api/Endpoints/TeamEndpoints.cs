@@ -5,6 +5,7 @@ using ArenaMaster.Api.Helpers;
 using ArenaMaster.Api.Models;
 using ArenaMaster.Api.Validators;
 using FluentValidation;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -16,17 +17,100 @@ public static class TeamEndpoints
     {
         var group = app.MapGroup("/api/teams");
 
-        group.MapGet("/", ListTeams);
-        group.MapPost("/", CreateTeam).RequireAuthorization();
-        group.MapGet("/{slug}", GetTeam);
-        group.MapPut("/{id:guid}", UpdateTeam).RequireAuthorization();
-        group.MapPost("/{id:guid}/logo", UploadLogo).RequireAuthorization().DisableAntiforgery();
-        group.MapDelete("/{id:guid}", DisbandTeam).RequireAuthorization();
-        group.MapPost("/{id:guid}/invitations", InvitePlayer).RequireAuthorization();
-        group.MapGet("/invitations/my", MyInvitations).RequireAuthorization();
-        group.MapPost("/invitations/{invId:guid}/accept", AcceptInvitation).RequireAuthorization();
-        group.MapPost("/invitations/{invId:guid}/decline", DeclineInvitation).RequireAuthorization();
-        group.MapDelete("/{id:guid}/members/{userId:guid}", RemoveMember).RequireAuthorization();
+        group.MapGet("/", ListTeams)
+            .WithSummary("Список команд")
+            .WithDescription("Повертає пагінований список усіх команд, відсортованих за датою створення.")
+            .Produces<PaginatedResult<TeamListItemDto>>(StatusCodes.Status200OK)
+            .WithTags("Teams");
+
+        group.MapPost("/", CreateTeam).RequireAuthorization()
+            .WithSummary("Створити команду")
+            .WithDescription("Створює нову команду. Користувач автоматично стає капітаном. Максимум одна команда на користувача. Автоматично генерує логотип.")
+            .Accepts<CreateTeamRequest>("application/json")
+            .Produces<CreateResult>(StatusCodes.Status201Created)
+            .Produces<HttpValidationProblemDetails>(StatusCodes.Status400BadRequest)
+            .Produces(StatusCodes.Status401Unauthorized)
+            .WithTags("Teams");
+
+        group.MapGet("/{slug}", GetTeam)
+            .WithSummary("Деталі команди")
+            .WithDescription("Повертає повну інформацію про команду: назву, склад, статистику турнірів та перемог.")
+            .Produces<TeamDetailDto>(StatusCodes.Status200OK)
+            .Produces(StatusCodes.Status404NotFound)
+            .WithTags("Teams");
+
+        group.MapPut("/{id:guid}", UpdateTeam).RequireAuthorization()
+            .WithSummary("Оновити назву команди")
+            .WithDescription("Оновлює назву команди. Доступно лише капітану.")
+            .Accepts<UpdateTeamRequest>("application/json")
+            .Produces<TeamUpdateResponse>(StatusCodes.Status200OK)
+            .Produces(StatusCodes.Status401Unauthorized)
+            .Produces(StatusCodes.Status403Forbidden)
+            .Produces(StatusCodes.Status404NotFound)
+            .WithTags("Teams");
+
+        group.MapPost("/{id:guid}/logo", UploadLogo).RequireAuthorization().DisableAntiforgery()
+            .WithSummary("Завантажити логотип команди")
+            .WithDescription("Завантажує логотип команди. Доступно лише капітану. Приймає multipart/form-data.")
+            .Produces<LogoUploadResponse>(StatusCodes.Status200OK)
+            .Produces(StatusCodes.Status400BadRequest)
+            .Produces(StatusCodes.Status401Unauthorized)
+            .Produces(StatusCodes.Status403Forbidden)
+            .Produces(StatusCodes.Status404NotFound)
+            .WithTags("Teams");
+
+        group.MapDelete("/{id:guid}", DisbandTeam).RequireAuthorization()
+            .WithSummary("Розформувати команду")
+            .WithDescription("Видаляє команду та всі її склади. Доступно лише капітану.")
+            .Produces(StatusCodes.Status204NoContent)
+            .Produces(StatusCodes.Status401Unauthorized)
+            .Produces(StatusCodes.Status403Forbidden)
+            .Produces(StatusCodes.Status404NotFound)
+            .WithTags("Teams");
+
+        group.MapPost("/{id:guid}/invitations", InvitePlayer).RequireAuthorization()
+            .WithSummary("Запросити гравця")
+            .WithDescription("Надсилає запрошення гравцю за нікнеймом або email. Доступно лише капітану. Гравцю надсилається сповіщення.")
+            .Accepts<InvitePlayerRequest>("application/json")
+            .Produces<InviteResponse>(StatusCodes.Status200OK)
+            .Produces(StatusCodes.Status400BadRequest)
+            .Produces(StatusCodes.Status401Unauthorized)
+            .Produces(StatusCodes.Status403Forbidden)
+            .Produces(StatusCodes.Status404NotFound)
+            .WithTags("Teams");
+
+        group.MapGet("/invitations/my", MyInvitations).RequireAuthorization()
+            .WithSummary("Мої запрошення до команд")
+            .WithDescription("Повертає список активних (очікуючих) запрошень для поточного користувача.")
+            .Produces<List<TeamInvitationDto>>(StatusCodes.Status200OK)
+            .Produces(StatusCodes.Status401Unauthorized)
+            .WithTags("Teams");
+
+        group.MapPost("/invitations/{invId:guid}/accept", AcceptInvitation).RequireAuthorization()
+            .WithSummary("Прийняти запрошення")
+            .WithDescription("Приймає запрошення до команди. Користувача додають як учасника.")
+            .Produces(StatusCodes.Status200OK)
+            .Produces(StatusCodes.Status401Unauthorized)
+            .Produces(StatusCodes.Status404NotFound)
+            .WithTags("Teams");
+
+        group.MapPost("/invitations/{invId:guid}/decline", DeclineInvitation).RequireAuthorization()
+            .WithSummary("Відхилити запрошення")
+            .WithDescription("Відхиляє запрошення до команди.")
+            .Produces(StatusCodes.Status200OK)
+            .Produces(StatusCodes.Status401Unauthorized)
+            .Produces(StatusCodes.Status404NotFound)
+            .WithTags("Teams");
+
+        group.MapDelete("/{id:guid}/members/{userId:guid}", RemoveMember).RequireAuthorization()
+            .WithSummary("Виключити гравця з команди")
+            .WithDescription("Виключає гравця з команди. Доступно лише капітану. Капітана виключити неможливо. Гравцю надсилається сповіщення.")
+            .Produces(StatusCodes.Status204NoContent)
+            .Produces(StatusCodes.Status400BadRequest)
+            .Produces(StatusCodes.Status401Unauthorized)
+            .Produces(StatusCodes.Status403Forbidden)
+            .Produces(StatusCodes.Status404NotFound)
+            .WithTags("Teams");
     }
 
     private static async Task<IResult> ListTeams(AppDbContext db, [FromQuery] int page = 1, [FromQuery] int pageSize = 12)
@@ -41,7 +125,7 @@ public static class TeamEndpoints
                 t.Id, t.Name, t.Slug, t.LogoUrl, t.Captain.Username, t.Members.Count))
             .ToListAsync();
 
-        return Results.Ok(new { items, total, page, pageSize });
+        return Results.Ok(new PaginatedResult<TeamListItemDto>(items, total, page, pageSize));
     }
 
     private static async Task<IResult> CreateTeam(
@@ -86,7 +170,7 @@ public static class TeamEndpoints
         });
         await db.SaveChangesAsync();
 
-        return Results.Created($"/api/teams/{team.Slug}", new { team.Id, team.Slug });
+        return Results.Created($"/api/teams/{team.Slug}", new CreateResult(team.Id, team.Slug));
     }
 
     private static async Task<IResult> GetTeam(string slug, AppDbContext db)
@@ -117,7 +201,7 @@ public static class TeamEndpoints
 
         team.Name = req.Name;
         await db.SaveChangesAsync();
-        return Results.Ok(new { team.Id, team.Name });
+        return Results.Ok(new TeamUpdateResponse(team.Id, team.Name));
     }
 
     private static async Task<IResult> UploadLogo(
@@ -134,7 +218,7 @@ public static class TeamEndpoints
 
         team.LogoUrl = path;
         await db.SaveChangesAsync();
-        return Results.Ok(new { logoUrl = path });
+        return Results.Ok(new LogoUploadResponse(path));
     }
 
     private static async Task<IResult> DisbandTeam(Guid id, ClaimsPrincipal principal, AppDbContext db)
@@ -180,7 +264,7 @@ public static class TeamEndpoints
         await NotificationHelper.CreateAsync(db, invitee.Id, "team_invitation",
             "Запрошення до команди", $"Вас запросили до команди {team.Name}", "team", team.Id);
 
-        return Results.Ok(new { invitation.Id });
+        return Results.Ok(new InviteResponse(invitation.Id));
     }
 
     private static async Task<IResult> MyInvitations(ClaimsPrincipal principal, AppDbContext db)
@@ -189,7 +273,7 @@ public static class TeamEndpoints
         var items = await db.TeamInvitations
             .Where(i => i.InviteeId == userId && i.Status == "pending")
             .Include(i => i.Team)
-            .Select(i => new { i.Id, i.TeamId, TeamName = i.Team.Name, i.CreatedAt })
+            .Select(i => new TeamInvitationDto(i.Id, i.TeamId, i.Team.Name, i.CreatedAt))
             .ToListAsync();
         return Results.Ok(items);
     }
@@ -243,3 +327,10 @@ public static class TeamEndpoints
         return Results.NoContent();
     }
 }
+
+public record PaginatedResult<T>(IReadOnlyList<T> Items, int Total, int Page, int PageSize);
+public record CreateResult(Guid Id, string Slug);
+public record TeamUpdateResponse(Guid Id, string Name);
+public record LogoUploadResponse(string LogoUrl);
+public record InviteResponse(Guid InvitationId);
+public record TeamInvitationDto(Guid Id, Guid TeamId, string TeamName, DateTime CreatedAt);

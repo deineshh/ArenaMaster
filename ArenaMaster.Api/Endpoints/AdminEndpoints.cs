@@ -1,6 +1,7 @@
 using System.Security.Claims;
 using ArenaMaster.Api.Data;
 using ArenaMaster.Api.Helpers;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -12,18 +13,68 @@ public static class AdminEndpoints
     {
         var group = app.MapGroup("/api/admin").RequireAuthorization();
 
-        group.MapGet("/users", ListUsers);
-        group.MapPatch("/users/{id:guid}/block", ToggleBlock);
-        group.MapPatch("/users/{id:guid}/role", ChangeRole);
-        group.MapDelete("/users/{id:guid}", DeleteUser);
-        group.MapGet("/tournaments", ListAllTournaments);
-        group.MapDelete("/tournaments/{id:guid}", DeleteTournament);
-        group.MapDelete("/teams/{id:guid}", DeleteTeam);
-    }
+        group.MapGet("/users", ListUsers)
+            .WithSummary("Список користувачів (адмін-панель)")
+            .WithDescription("Повертає пагінований список усіх користувачів системи. Потрібна роль admin.")
+            .Produces<AdminUserListResponse>(StatusCodes.Status200OK)
+            .Produces(StatusCodes.Status401Unauthorized)
+            .Produces(StatusCodes.Status403Forbidden)
+            .WithTags("Admin");
 
-    private static IResult RequireAdmin(ClaimsPrincipal principal)
-    {
-        return principal.IsInRole("admin") ? Results.Ok() : Results.Forbid();
+        group.MapPatch("/users/{id:guid}/block", ToggleBlock)
+            .WithSummary("Заблокувати / розблокувати користувача")
+            .WithDescription("Перемикає статус блокування користувача. Заблоковані користувачі не можуть увійти. Потрібна роль admin.")
+            .Produces<BlockStatusResponse>(StatusCodes.Status200OK)
+            .Produces(StatusCodes.Status401Unauthorized)
+            .Produces(StatusCodes.Status403Forbidden)
+            .Produces(StatusCodes.Status404NotFound)
+            .WithTags("Admin");
+
+        group.MapPatch("/users/{id:guid}/role", ChangeRole)
+            .WithSummary("Змінити роль користувача")
+            .WithDescription("Змінює роль користувача. Доступні ролі: `player`, `organizer`, `admin`. Потрібна роль admin.")
+            .Accepts<ChangeRoleRequest>("application/json")
+            .Produces<RoleChangeResponse>(StatusCodes.Status200OK)
+            .Produces(StatusCodes.Status400BadRequest)
+            .Produces(StatusCodes.Status401Unauthorized)
+            .Produces(StatusCodes.Status403Forbidden)
+            .Produces(StatusCodes.Status404NotFound)
+            .WithTags("Admin");
+
+        group.MapDelete("/users/{id:guid}", DeleteUser)
+            .WithSummary("Видалити користувача")
+            .WithDescription("Повністю видаляє користувача з системи. Потрібна роль admin.")
+            .Produces(StatusCodes.Status204NoContent)
+            .Produces(StatusCodes.Status401Unauthorized)
+            .Produces(StatusCodes.Status403Forbidden)
+            .Produces(StatusCodes.Status404NotFound)
+            .WithTags("Admin");
+
+        group.MapGet("/tournaments", ListAllTournaments)
+            .WithSummary("Список турнірів (адмін-панель)")
+            .WithDescription("Повертає всі турніри, включаючи чернетки. Потрібна роль admin.")
+            .Produces<List<AdminTournamentItem>>(StatusCodes.Status200OK)
+            .Produces(StatusCodes.Status401Unauthorized)
+            .Produces(StatusCodes.Status403Forbidden)
+            .WithTags("Admin");
+
+        group.MapDelete("/tournaments/{id:guid}", DeleteTournament)
+            .WithSummary("Видалити турнір")
+            .WithDescription("Видаляє турнір разом із усіма учасниками та матчами. Потрібна роль admin.")
+            .Produces(StatusCodes.Status204NoContent)
+            .Produces(StatusCodes.Status401Unauthorized)
+            .Produces(StatusCodes.Status403Forbidden)
+            .Produces(StatusCodes.Status404NotFound)
+            .WithTags("Admin");
+
+        group.MapDelete("/teams/{id:guid}", DeleteTeam)
+            .WithSummary("Видалити команду")
+            .WithDescription("Видаляє команду разом із її складом та запрошеннями. Потрібна роль admin.")
+            .Produces(StatusCodes.Status204NoContent)
+            .Produces(StatusCodes.Status401Unauthorized)
+            .Produces(StatusCodes.Status403Forbidden)
+            .Produces(StatusCodes.Status404NotFound)
+            .WithTags("Admin");
     }
 
     private static async Task<IResult> ListUsers(ClaimsPrincipal principal, AppDbContext db, int page = 1, int pageSize = 20)
@@ -35,10 +86,10 @@ public static class AdminEndpoints
             .OrderByDescending(u => u.CreatedAt)
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
-            .Select(u => new { u.Id, u.Username, u.Email, u.Role, u.IsBlocked, u.EmailConfirmed, u.CreatedAt })
+            .Select(u => new AdminUserItem(u.Id, u.Username, u.Email, u.Role, u.IsBlocked, u.EmailConfirmed, u.CreatedAt))
             .ToListAsync();
 
-        return Results.Ok(new { items, total, page, pageSize });
+        return Results.Ok(new AdminUserListResponse(items, total, page, pageSize));
     }
 
     private static async Task<IResult> ToggleBlock(Guid id, ClaimsPrincipal principal, AppDbContext db)
@@ -49,7 +100,7 @@ public static class AdminEndpoints
         user.IsBlocked = !user.IsBlocked;
         user.UpdatedAt = DateTime.UtcNow;
         await db.SaveChangesAsync();
-        return Results.Ok(new { user.IsBlocked });
+        return Results.Ok(new BlockStatusResponse(user.IsBlocked));
     }
 
     private static async Task<IResult> ChangeRole(
@@ -64,7 +115,7 @@ public static class AdminEndpoints
         user.Role = req.Role;
         user.UpdatedAt = DateTime.UtcNow;
         await db.SaveChangesAsync();
-        return Results.Ok(new { user.Role });
+        return Results.Ok(new RoleChangeResponse(user.Role));
     }
 
     private static async Task<IResult> DeleteUser(Guid id, ClaimsPrincipal principal, AppDbContext db)
@@ -85,12 +136,10 @@ public static class AdminEndpoints
             .Include(t => t.Discipline)
             .Include(t => t.Organizer)
             .OrderByDescending(t => t.CreatedAt)
-            .Select(t => new
-            {
-                t.Id, t.Title, t.Slug, Discipline = t.Discipline.Name,
-                Organizer = t.Organizer.Username, t.Status, t.StartsAt,
-                Participants = t.Participants.Count(p => p.Status == "accepted")
-            })
+            .Select(t => new AdminTournamentItem(
+                t.Id, t.Title, t.Slug, t.Discipline.Name,
+                t.Organizer.Username, t.Status, t.StartsAt,
+                t.Participants.Count(p => p.Status == "accepted")))
             .ToListAsync();
 
         return Results.Ok(items);
@@ -130,3 +179,8 @@ public static class AdminEndpoints
 }
 
 public record ChangeRoleRequest(string Role);
+public record AdminUserItem(Guid Id, string Username, string Email, string Role, bool IsBlocked, bool EmailConfirmed, DateTime CreatedAt);
+public record AdminUserListResponse(List<AdminUserItem> Items, int Total, int Page, int PageSize);
+public record BlockStatusResponse(bool IsBlocked);
+public record RoleChangeResponse(string Role);
+public record AdminTournamentItem(Guid Id, string Title, string Slug, string Discipline, string Organizer, string Status, DateTime StartsAt, int Participants);

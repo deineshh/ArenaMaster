@@ -1,8 +1,7 @@
-using System.Security.Claims;
 using ArenaMaster.Api.Data;
 using ArenaMaster.Api.DTOs.User;
 using ArenaMaster.Api.Helpers;
-using ArenaMaster.Api.Models;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -14,14 +13,47 @@ public static class UserEndpoints
     {
         var group = app.MapGroup("/api/users");
 
-        group.MapGet("/me", GetMe).RequireAuthorization();
-        group.MapPut("/me", UpdateMe).RequireAuthorization();
-        group.MapPost("/me/avatar", UploadAvatar).RequireAuthorization().DisableAntiforgery();
-        group.MapGet("/{username}", GetPublicProfile);
-        group.MapGet("/{username}/tournaments", GetTournamentHistory);
+        group.MapGet("/me", GetMe).RequireAuthorization()
+            .WithSummary("Отримати мій профіль")
+            .WithDescription("Повертає профіль поточного автентифікованого користувача зі статистикою.")
+            .Produces<UserProfileDto>(StatusCodes.Status200OK)
+            .Produces(StatusCodes.Status401Unauthorized)
+            .Produces(StatusCodes.Status404NotFound)
+            .WithTags("Users");
+
+        group.MapPut("/me", UpdateMe).RequireAuthorization()
+            .WithSummary("Оновити мій профіль")
+            .WithDescription("Оновлює bio, Discord URL та соціальні посилання. Поля зі значенням null не змінюються.")
+            .Accepts<UpdateProfileRequest>("application/json")
+            .Produces<UserProfileDto>(StatusCodes.Status200OK)
+            .Produces(StatusCodes.Status401Unauthorized)
+            .Produces(StatusCodes.Status404NotFound)
+            .WithTags("Users");
+
+        group.MapPost("/me/avatar", UploadAvatar).RequireAuthorization().DisableAntiforgery()
+            .WithSummary("Завантажити аватар")
+            .WithDescription("Завантажує файл зображення як аватар користувача. Приймає multipart/form-data. Якщо файл некоректний, автоматично генерує аватар через Unsplash.")
+            .Produces<AvatarUploadResponse>(StatusCodes.Status200OK)
+            .Produces(StatusCodes.Status400BadRequest)
+            .Produces(StatusCodes.Status401Unauthorized)
+            .WithTags("Users");
+
+        group.MapGet("/{username}", GetPublicProfile)
+            .WithSummary("Публічний профіль користувача")
+            .WithDescription("Повертає публічну інформацію про користувача та список його команд.")
+            .Produces<PublicProfileResponse>(StatusCodes.Status200OK)
+            .Produces(StatusCodes.Status404NotFound)
+            .WithTags("Users");
+
+        group.MapGet("/{username}/tournaments", GetTournamentHistory)
+            .WithSummary("Історія турнірів користувача")
+            .WithDescription("Повертає історію участі користувача в турнірах.")
+            .Produces<List<TournamentHistoryItemDto>>(StatusCodes.Status200OK)
+            .Produces(StatusCodes.Status404NotFound)
+            .WithTags("Users");
     }
 
-    private static async Task<IResult> GetMe(ClaimsPrincipal principal, AppDbContext db)
+    private static async Task<IResult> GetMe(System.Security.Claims.ClaimsPrincipal principal, AppDbContext db)
     {
         var userId = principal.GetUserId();
         if (userId is null) return Results.Unauthorized();
@@ -36,7 +68,7 @@ public static class UserEndpoints
     }
 
     private static async Task<IResult> UpdateMe(
-        UpdateProfileRequest req, ClaimsPrincipal principal, AppDbContext db)
+        UpdateProfileRequest req, System.Security.Claims.ClaimsPrincipal principal, AppDbContext db)
     {
         var userId = principal.GetUserId();
         if (userId is null) return Results.Unauthorized();
@@ -57,7 +89,7 @@ public static class UserEndpoints
     }
 
     private static async Task<IResult> UploadAvatar(
-        IFormFile file, ClaimsPrincipal principal, AppDbContext db,
+        IFormFile file, System.Security.Claims.ClaimsPrincipal principal, AppDbContext db,
         IWebHostEnvironment env, UnsplashClient unsplash)
     {
         var userId = principal.GetUserId();
@@ -76,7 +108,7 @@ public static class UserEndpoints
         user.AvatarUrl = path;
         user.UpdatedAt = DateTime.UtcNow;
         await db.SaveChangesAsync();
-        return Results.Ok(new { avatarUrl = path });
+        return Results.Ok(new AvatarUploadResponse(path));
     }
 
     private static async Task<IResult> GetPublicProfile(string username, AppDbContext db)
@@ -91,13 +123,11 @@ public static class UserEndpoints
             .Select(m => new { m.Team.Id, m.Team.Name, m.Team.Slug, m.Team.LogoUrl, m.Role })
             .ToListAsync();
 
-        return Results.Ok(new
-        {
-            profile = new UserProfileDto(
+        return Results.Ok(new PublicProfileResponse(
+            new UserProfileDto(
                 user.Id, user.Username, user.AvatarUrl, user.Bio, user.DiscordUrl,
                 user.SocialLinks, stats.tournaments, stats.wins, stats.matches),
-            teams
-        });
+            teams));
     }
 
     private static async Task<IResult> GetTournamentHistory(string username, AppDbContext db)
@@ -137,3 +167,6 @@ public static class UserEndpoints
         return (participations.Count, wins, matches);
     }
 }
+
+public record AvatarUploadResponse(string AvatarUrl);
+public record PublicProfileResponse(UserProfileDto Profile, object Teams);

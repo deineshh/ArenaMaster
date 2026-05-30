@@ -4,7 +4,7 @@ namespace ArenaMaster.Api.Helpers;
 
 public static partial class PlaceholderImageGenerator
 {
-    public static void WriteTeamLogo(string teamName, Guid teamId)
+    public static string WriteTeamLogo(string teamName, Guid teamId)
     {
         var initials = GetInitials(teamName);
         var hue = Math.Abs(teamName.GetHashCode()) % 360;
@@ -17,7 +17,9 @@ public static partial class PlaceholderImageGenerator
 
         var dir = Path.Combine(Directory.GetCurrentDirectory(), "uploads", "teams");
         Directory.CreateDirectory(dir);
-        File.WriteAllText(Path.Combine(dir, $"{teamId}.svg"), svg.Trim());
+        var path = Path.Combine(dir, $"{teamId}.svg");
+        File.WriteAllText(path, svg.Trim());
+        return $"/uploads/teams/{teamId}.svg";
     }
 
     public static string WriteUserAvatar(string username, Guid userId)
@@ -61,13 +63,15 @@ public static partial class PlaceholderImageGenerator
         return $"/uploads/tournaments/{tournamentId}.svg";
     }
 
-    public static void WriteDisciplinePlaceholder()
+    public static string WriteDisciplinePlaceholder(Guid disciplineId)
     {
         var svg = """<svg xmlns="http://www.w3.org/2000/svg" width="800" height="200" viewBox="0 0 800 200"><rect width="800" height="200" fill="#2A2B32"/><text x="400" y="115" text-anchor="middle" font-family="Arial,sans-serif" font-size="24" fill="#666">Discipline Cover</text></svg>""";
 
         var dir = Path.Combine(Directory.GetCurrentDirectory(), "uploads", "disciplines");
         Directory.CreateDirectory(dir);
-        File.WriteAllText(Path.Combine(dir, "placeholder.svg"), svg.Trim());
+        var path = Path.Combine(dir, $"{disciplineId}.svg");
+        File.WriteAllText(path, svg.Trim());
+        return $"/uploads/disciplines/{disciplineId}.svg";
     }
 
     private static string GetInitials(string name)
