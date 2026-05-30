@@ -1,0 +1,12 @@
+bin/
+obj/
+.vs/
+*.user
+.env
+.env.*
+!.env.example
+arena-master-client/node_modules/
+arena-master-client/dist/
+ArenaMaster.Api/uploads/*
+!ArenaMaster.Api/uploads/.gitkeep
+appsettings.Development.json

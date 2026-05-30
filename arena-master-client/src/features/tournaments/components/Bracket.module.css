@@ -1,0 +1,36 @@
+.scroll {
+  overflow-x: auto;
+  padding-bottom: 8px;
+}
+
+.round {
+  min-width: 160px;
+}
+
+.match {
+  min-width: 140px;
+  border-left: 3px solid var(--color-primary);
+  cursor: pointer;
+  transition: box-shadow var(--transition-fast), transform var(--transition-fast);
+  background: var(--color-bg-card);
+  border-color: var(--color-border);
+}
+
+.match:hover {
+  box-shadow: var(--glow-primary);
+  transform: translateX(2px);
+}
+
+.bracketLabel {
+  color: var(--color-primary);
+  font-weight: 600;
+  border-bottom: 1px solid var(--color-border);
+  padding-bottom: 8px;
+  margin-bottom: 12px;
+}
+
+@media (max-width: 768px) {
+  .scroll {
+    -webkit-overflow-scrolling: touch;
+  }
+}
