@@ -132,6 +132,15 @@ app.UseForwardedHeaders(new ForwardedHeadersOptions
     KnownProxies = { }
 });
 
+if (!app.Environment.IsDevelopment())
+{
+    app.Use((context, next) =>
+    {
+        context.Request.Scheme = "https";
+        return next();
+    });
+}
+
 Directory.CreateDirectory(Path.Combine(app.Environment.ContentRootPath, "uploads"));
 
 using (var scope = app.Services.CreateScope())
