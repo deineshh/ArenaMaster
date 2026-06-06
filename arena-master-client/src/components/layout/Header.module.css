@@ -1,0 +1,82 @@
+.header {
+  border-bottom: 1px solid var(--color-border);
+  background: var(--color-bg);
+  position: relative;
+}
+
+.header::after {
+  content: '';
+  position: absolute;
+  bottom: -1px;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--color-primary), var(--color-accent), transparent);
+  opacity: 0.8;
+}
+
+.logo {
+  text-decoration: none;
+  background: var(--brand-gradient-text);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  font-weight: 700;
+  font-size: 1.4rem;
+  cursor: pointer;
+  letter-spacing: 0.02em;
+  filter: drop-shadow(0 0 12px rgba(124, 58, 237, 0.3));
+}
+
+.logo:hover {
+  opacity: 0.9;
+  filter: drop-shadow(0 0 20px rgba(124, 58, 237, 0.5));
+}
+
+.navLink {
+  text-decoration: none;
+  color: var(--color-text);
+  cursor: pointer;
+  transition: color var(--transition-fast);
+  font-size: 0.875rem;
+  padding: 4px 0;
+  position: relative;
+}
+
+.navLink::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  width: 0;
+  height: 2px;
+  background: var(--brand-gradient);
+  transition: width var(--transition-normal);
+  border-radius: 1px;
+}
+
+.navLink:hover {
+  color: var(--color-primary);
+}
+
+.navLink:hover::after {
+  width: 100%;
+}
+
+.navLinkSpecial {
+  text-decoration: none;
+  color: var(--color-primary);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  font-size: 0.875rem;
+  font-weight: 600;
+  padding: 6px 14px;
+  border: 1px solid var(--color-primary);
+  border-radius: 6px;
+}
+
+.navLinkSpecial:hover {
+  color: white;
+  background: var(--color-primary);
+  box-shadow: var(--glow-primary);
+}

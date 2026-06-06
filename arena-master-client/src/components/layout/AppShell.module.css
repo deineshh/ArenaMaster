@@ -1,0 +1,18 @@
+.shell {
+  min-height: 100vh;
+  background: var(--color-bg);
+}
+
+.main {
+  background: var(--color-bg);
+  background-image:
+    linear-gradient(rgba(124, 58, 237, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(124, 58, 237, 0.03) 1px, transparent 1px);
+  background-size: 64px 64px;
+}
+
+@media (max-width: 768px) {
+  .shell {
+    padding-bottom: 2rem;
+  }
+}

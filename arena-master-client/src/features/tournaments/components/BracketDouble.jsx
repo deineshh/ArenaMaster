@@ -1,0 +1,254 @@
+import { Box, Text, ScrollArea, Tooltip, Stack, Title } from '@mantine/core';
+import { IconInfoCircle } from '@tabler/icons-react';
+import styles from './Bracket.module.css';
+
+// Esport country flag list for high-fidelity placeholders
+const COUNTRIES = ['ua', 'us', 'pl', 'de', 'gb', 'se', 'dk', 'fr', 'kr', 'ca', 'br', 'es', 'fi', 'no'];
+
+const getParticipantCountry = (name) => {
+  if (!name || name === 'TBD' || name === 'Очікується') return 'us';
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) {
+    hash = name.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  const index = Math.abs(hash) % COUNTRIES.length;
+  return COUNTRIES[index];
+};
+
+export function BracketDouble({ matches }) {
+  if (!matches || matches.length === 0) {
+    return (
+      <Box p="xl" ta="center">
+        <Text style={{ color: 'var(--color-text-muted)' }}>Брекет ще не згенеровано</Text>
+      </Box>
+    );
+  }
+
+  const winners = matches.filter((m) => m.bracketSide === 'winners');
+  const losers = matches.filter((m) => m.bracketSide === 'losers');
+  const grand = matches.filter((m) => m.bracketSide === 'grand_final');
+
+  const cardHeight = 60; // px
+  const gap = 34;       // Spacing between cards in Round 1
+
+  const getRoundLabel = (rIndex, total, labelPrefix) => {
+    const diff = total - rIndex - 1;
+    if (diff === 0) return `${labelPrefix} - FINAL`;
+    if (diff === 1) return `${labelPrefix} - 1/2`;
+    return `${labelPrefix} - ROUND ${rIndex + 1}`;
+  };
+
+  const renderFlag = (name) => {
+    if (!name || name === 'TBD' || name === 'Очікується') {
+      return (
+        <div className={styles.flagPlaceholder}>
+          <svg className={styles.flagPlaceholderSvg} viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12 2L3 6v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V6l-9-4z" />
+          </svg>
+        </div>
+      );
+    }
+    return (
+      <img
+        className={styles.flagBadge}
+        src={`https://flagcdn.com/w40/${getParticipantCountry(name)}.png`}
+        alt="Flag"
+        onError={(e) => {
+          e.target.style.display = 'none';
+        }}
+      />
+    );
+  };
+
+  const renderSide = (sideMatches, labelPrefix, headerTitle) => {
+    if (sideMatches.length === 0) return null;
+
+    // Group matches by round
+    const roundsMap = {};
+    for (const m of sideMatches) {
+      if (!roundsMap[m.round]) roundsMap[m.round] = [];
+      roundsMap[m.round].push(m);
+    }
+
+    // Sort rounds and sort matches in each round by matchNumber
+    const sortedRounds = Object.entries(roundsMap)
+      .sort(([rA], [rB]) => Number(rA) - Number(rB))
+      .map(([roundNum, ms]) => {
+        const sortedMs = [...ms].sort((mA, mB) => mA.matchNumber - mB.matchNumber);
+        return {
+          round: Number(roundNum),
+          matches: sortedMs,
+        };
+      });
+
+    const totalRounds = sortedRounds.length;
+
+    return (
+      <Box mb="xl">
+        <Title order={4} mb="sm" style={{
+          color: 'var(--color-primary)',
+          fontFamily: 'Chakra Petch, sans-serif',
+          fontSize: '14px',
+          fontWeight: 600,
+          letterSpacing: '0.5px',
+        }}>
+          {headerTitle}
+        </Title>
+        <ScrollArea className={styles.scroll}>
+          <div className={styles.bracketContainer}>
+            {sortedRounds.map(({ round, matches: roundMatches }, rIndex) => {
+              const roundOffset = rIndex; // 0-indexed
+              const blockSize = (cardHeight + gap) * Math.pow(2, roundOffset);
+              const verticalMargin = (blockSize - cardHeight) / 2;
+
+              return (
+                <div key={round} className={styles.roundColumn}>
+                  <div className={styles.roundHeader}>
+                    {getRoundLabel(rIndex, totalRounds, labelPrefix)}
+                  </div>
+                  <div className={styles.matchList}>
+                    {roundMatches.map((m) => {
+                      const isTopMatch = m.matchNumber % 2 !== 0;
+                      const hasWinner = m.winnerId !== null;
+
+                      const isP1Winner = m.score1 !== null && m.score2 !== null && m.score1 > m.score2;
+                      const isP2Winner = m.score1 !== null && m.score2 !== null && m.score2 > m.score1;
+
+                      // Vertical connector line height
+                      const verticalLineHeight = blockSize / 2;
+
+                      return (
+                        <div
+                          key={m.id}
+                          className={styles.matchWrapper}
+                          style={{ margin: `${verticalMargin}px 0` }}
+                        >
+                          {/* Left horizontal connector */}
+                          {rIndex > 0 && (
+                            <div
+                              className={`${styles.connectorLine} ${styles.connectorLineHorizontal}`}
+                              style={{
+                                width: '25px',
+                                left: '-25px',
+                                top: '30px',
+                              }}
+                            />
+                          )}
+
+                          {/* Right horizontal connector */}
+                          {rIndex < totalRounds - 1 && (
+                            <>
+                              <div
+                                className={`${styles.connectorLine} ${styles.connectorLineHorizontal} ${
+                                  hasWinner ? styles.connectorLineActive : ''
+                                }`}
+                                style={{
+                                  width: '25px',
+                                  right: '-25px',
+                                  top: '30px',
+                                }}
+                              />
+                              <div
+                                className={`${styles.connectorLine} ${styles.connectorLineVertical} ${
+                                  hasWinner ? styles.connectorLineActive : ''
+                                }`}
+                                style={{
+                                  height: `${verticalLineHeight}px`,
+                                  right: '-25px',
+                                  top: isTopMatch ? '30px' : 'auto',
+                                  bottom: !isTopMatch ? '30px' : 'auto',
+                                }}
+                              />
+                            </>
+                          )}
+
+                          {/* Esports Match Card */}
+                          <div
+                            className={`${styles.matchCard} ${
+                              m.status === 'ongoing' ? styles.matchCardActive : ''
+                            }`}
+                          >
+                            {/* Centered Single Info Circle Icon */}
+                            {m.participant1Name && m.participant2Name && (
+                              <Tooltip label="Деталі матчу" position="top">
+                                <span className={styles.infoButton}>
+                                  <IconInfoCircle size={10} />
+                                </span>
+                              </Tooltip>
+                            )}
+
+                            {/* Team 1 */}
+                            <div className={styles.teamRow}>
+                              <div className={styles.teamInfo}>
+                                {renderFlag(m.participant1Name)}
+                                <Text
+                                  className={`${styles.teamName} ${
+                                    !m.participant1Name ? styles.teamMuted : ''
+                                  } ${isP2Winner ? styles.teamLost : ''}`}
+                                >
+                                  {m.participant1Name || 'TBD'}
+                                </Text>
+                              </div>
+                              <div
+                                className={`${styles.scoreBox} ${
+                                  isP1Winner ? styles.scoreWinner : ''
+                                }`}
+                              >
+                                {m.score1 !== null ? m.score1 : 0}
+                              </div>
+                            </div>
+
+                            {/* Team 2 */}
+                            <div className={styles.teamRow}>
+                              <div className={styles.teamInfo}>
+                                {renderFlag(m.participant2Name)}
+                                <Text
+                                  className={`${styles.teamName} ${
+                                    !m.participant2Name ? styles.teamMuted : ''
+                                  } ${isP1Winner ? styles.teamLost : ''}`}
+                                >
+                                  {m.participant2Name || 'TBD'}
+                                </Text>
+                              </div>
+                              <div
+                                className={`${styles.scoreBox} ${
+                                  isP2Winner ? styles.scoreWinner : ''
+                                }`}
+                              >
+                                {m.score2 !== null ? m.score2 : 0}
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Match Scheduled Date */}
+                          {m.scheduledAt && (
+                            <div className={styles.matchDate}>
+                              {new Date(m.scheduledAt).toLocaleString('uk-UA', {
+                                day: '2-digit',
+                                month: 'short',
+                                hour: '2-digit',
+                                minute: '2-digit',
+                              }).replace('р.', '')}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </ScrollArea>
+      </Box>
+    );
+  };
+
+  return (
+    <Stack gap="xl">
+      {renderSide(winners, 'WIN', 'Сітка переможців (Winners Bracket)')}
+      {renderSide(losers, 'LOSS', 'Сітка переможених (Losers Bracket)')}
+      {renderSide(grand, 'FINAL', 'Суперфінал (Grand Final)')}
+    </Stack>
+  );
+}

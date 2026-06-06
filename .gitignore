@@ -1,0 +1,11 @@
+bin/
+obj/
+.vs/
+*.user
+.env
+.env.*
+!.env.example
+arena-master-client/node_modules/
+arena-master-client/dist/
+arena-master-client/build/
+appsettings.Development.json

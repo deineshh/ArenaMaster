@@ -1,0 +1,123 @@
+:root {
+  transition: background var(--transition-slow), color var(--transition-slow), border-color var(--transition-slow), box-shadow var(--transition-slow);
+
+  /* Gaming palette from UI/UX Pro Max (products.csv #13) */
+  --color-primary: #7C3AED;
+  --color-primary-hover: #6D28D9;
+  --color-primary-light: rgba(124, 58, 237, 0.12);
+  --color-secondary: #A78BFA;
+  --color-accent: #F43F5E;
+  --color-accent-hover: #E11D48;
+  --color-accent-light: rgba(244, 63, 94, 0.12);
+  --color-bg: #0F0F23;
+  --color-bg-elevated: #1A1A3E;
+  --color-bg-card: #1E1E42;
+  --color-text: #E2E8F0;
+  --color-text-muted: #94A3B8;
+  --color-border: #4C1D95;
+  --color-border-subtle: #202046;
+  --color-success: #22C55E;
+  --color-warning: #F59E0B;
+  --color-error: #EF4444;
+
+  /* Surface colors */
+  --surface-primary: var(--color-bg);
+  --surface-secondary: #151530;
+  --surface-tertiary: var(--color-bg-elevated);
+  --surface-elevated: var(--color-bg-card);
+
+  /* Interactive surfaces */
+  --surface-hover: #252550;
+  --surface-active: #2D2D60;
+
+  /* Brand gradients */
+  --brand-gradient: linear-gradient(135deg, #7C3AED 0%, #F43F5E 100%);
+  --brand-gradient-subtle: linear-gradient(135deg, rgba(124, 58, 237, 0.15), rgba(244, 63, 94, 0.15));
+  --brand-gradient-text: linear-gradient(135deg, #C084FC, #F43F5E);
+
+  /* Neon glow effects */
+  --glow-primary: 0 0 24px rgba(124, 58, 237, 0.35);
+  --glow-primary-strong: 0 0 40px rgba(124, 58, 237, 0.5);
+  --glow-accent: 0 0 24px rgba(244, 63, 94, 0.35);
+  --glow-accent-strong: 0 0 40px rgba(244, 63, 94, 0.5);
+  --glow-success: 0 0 20px rgba(34, 197, 94, 0.35);
+
+  /* Shadows */
+  --shadow-card: 0 2px 12px rgba(0, 0, 0, 0.3);
+  --shadow-card-hover: var(--glow-primary);
+  --shadow-elevated: 0 8px 32px rgba(0, 0, 0, 0.5);
+
+  /* Transitions */
+  --transition-fast: 150ms ease;
+  --transition-normal: 200ms ease;
+  --transition-slow: 300ms ease;
+  --transition-gaming: 400ms cubic-bezier(0.34, 1.56, 0.64, 1);
+
+  /* Spacing scale */
+  --space-xs: 4px;
+  --space-sm: 8px;
+  --space-md: 16px;
+  --space-lg: 24px;
+  --space-xl: 32px;
+  --space-2xl: 48px;
+
+  /* Border radius */
+  --radius-card: 12px;
+  --radius-button: 8px;
+  --radius-badge: 6px;
+}
+
+/* Geometric grid background pattern */
+/* Light theme overrides */
+[data-mantine-color-scheme="light"] {
+  --color-bg: #F8F9FC;
+  --color-bg-elevated: #FFFFFF;
+  --color-bg-card: #FFFFFF;
+  --color-text: #1A1A2E;
+  --color-text-muted: #64748B;
+  --color-border: #D8B4FE;
+  --color-border-subtle: #E9D5FF;
+
+  --surface-primary: var(--color-bg);
+  --surface-secondary: #F1F3F9;
+  --surface-tertiary: var(--color-bg-elevated);
+  --surface-elevated: var(--color-bg-card);
+  --surface-hover: #EEF2FF;
+  --surface-active: #E8ECF4;
+
+  --shadow-card: 0 2px 12px rgba(0, 0, 0, 0.08);
+  --shadow-card-hover: 0 0 20px rgba(124, 58, 237, 0.15);
+  --shadow-elevated: 0 4px 24px rgba(0, 0, 0, 0.1);
+
+  --glow-primary: 0 0 16px rgba(124, 58, 237, 0.2);
+  --glow-primary-strong: 0 0 24px rgba(124, 58, 237, 0.3);
+  --glow-accent: 0 0 16px rgba(244, 63, 94, 0.2);
+  --glow-accent-strong: 0 0 24px rgba(244, 63, 94, 0.3);
+  --glow-success: 0 0 14px rgba(34, 197, 94, 0.2);
+}
+
+.bg-pattern-grid {
+  background-image:
+    linear-gradient(rgba(124, 58, 237, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(124, 58, 237, 0.04) 1px, transparent 1px);
+  background-size: 48px 48px;
+}
+
+[data-mantine-color-scheme="light"] .bg-pattern-grid {
+  background-image:
+    linear-gradient(rgba(124, 58, 237, 0.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(124, 58, 237, 0.06) 1px, transparent 1px);
+}
+
+.bg-pattern-grid-subtle {
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+  background-size: 64px 64px;
+}
+
+[data-mantine-color-scheme="light"] .bg-pattern-grid-subtle {
+  background-image:
+    linear-gradient(rgba(124, 58, 237, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(124, 58, 237, 0.04) 1px, transparent 1px);
+}

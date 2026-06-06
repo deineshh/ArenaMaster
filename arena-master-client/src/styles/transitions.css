@@ -1,0 +1,140 @@
+.transition-all {
+  transition: all var(--transition-normal);
+}
+
+.hover-lift {
+  transition: transform var(--transition-normal), box-shadow var(--transition-normal);
+}
+
+.hover-lift:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-card-hover);
+}
+
+.hover-glow-neon {
+  transition: box-shadow var(--transition-normal), transform var(--transition-normal);
+}
+
+.hover-glow-neon:hover {
+  box-shadow: var(--glow-primary);
+  transform: translateY(-2px);
+}
+
+.hover-glow-accent {
+  transition: box-shadow var(--transition-normal), transform var(--transition-normal);
+}
+
+.hover-glow-accent:hover {
+  box-shadow: var(--glow-accent);
+  transform: translateY(-2px);
+}
+
+.hover-border-glow {
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.hover-border-glow:hover {
+  border-color: var(--color-primary);
+  box-shadow: var(--glow-primary);
+}
+
+.fade-in {
+  animation: fadeIn var(--transition-slow) ease forwards;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.skeleton-pulse {
+  animation: skeletonPulse 1.5s ease-in-out infinite;
+}
+
+@keyframes skeletonPulse {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 0.7; }
+}
+
+@keyframes neonPulse {
+  0%, 100% { box-shadow: var(--glow-primary); }
+  50% { box-shadow: var(--glow-primary-strong); }
+}
+
+.neon-pulse {
+  animation: neonPulse 2s ease-in-out infinite;
+}
+
+/* New gaming animations */
+@keyframes glowCycle {
+  0%, 100% { box-shadow: 0 0 16px rgba(124, 58, 237, 0.3); }
+  33% { box-shadow: 0 0 24px rgba(244, 63, 94, 0.3); }
+  66% { box-shadow: 0 0 24px rgba(34, 197, 94, 0.3); }
+}
+
+.glow-cycle {
+  animation: glowCycle 4s ease-in-out infinite;
+}
+
+@keyframes scanline {
+  0% { transform: translateY(-100%); }
+  100% { transform: translateY(100vh); }
+}
+
+.scanline-overlay::after {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background: rgba(124, 58, 237, 0.06);
+  pointer-events: none;
+  animation: scanline 8s linear infinite;
+  z-index: 9999;
+}
+
+.gradient-text {
+  background: var(--brand-gradient-text);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.hover-scale {
+  transition: transform var(--transition-gaming);
+}
+
+.hover-scale:hover {
+  transform: scale(1.03);
+}
+
+@keyframes borderGlow {
+  0%, 100% { border-color: var(--color-primary); }
+  50% { border-color: var(--color-accent); }
+}
+
+.border-glow-cycle {
+  animation: borderGlow 3s ease-in-out infinite;
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(24px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.slide-up {
+  animation: slideUp var(--transition-slow) ease forwards;
+}
+
+.scroll-reveal {
+  opacity: 0;
+  animation: slideUp var(--transition-slow) ease forwards;
+}
+
+.scroll-reveal:nth-child(1) { animation-delay: 0ms; }
+.scroll-reveal:nth-child(2) { animation-delay: 80ms; }
+.scroll-reveal:nth-child(3) { animation-delay: 160ms; }
+.scroll-reveal:nth-child(4) { animation-delay: 240ms; }
+.scroll-reveal:nth-child(5) { animation-delay: 320ms; }
+.scroll-reveal:nth-child(6) { animation-delay: 400ms; }
