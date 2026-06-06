@@ -125,7 +125,7 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
-app.UseForwardedHeaders(new Microsoft.AspNetCore.HttpOverrides.ForwardedHeadersOptions
+app.UseForwardedHeaders(new ForwardedHeadersOptions
 {
     ForwardedHeaders = Microsoft.AspNetCore.HttpOverrides.ForwardedHeaders.XForwardedFor | Microsoft.AspNetCore.HttpOverrides.ForwardedHeaders.XForwardedProto,
     KnownNetworks = { },
