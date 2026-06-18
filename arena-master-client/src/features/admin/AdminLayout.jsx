@@ -9,6 +9,9 @@ const links = [
   { to: '/admin/tournaments', label: 'Турніри' },
   { to: '/admin/teams', label: 'Команди' },
   { to: '/admin/disciplines', label: 'Дисципліни' },
+  { to: '/admin/matches', label: 'Матчі' },
+  { to: '/admin/participants', label: 'Учасники' },
+  { to: '/admin/members', label: 'Склад команд' },
 ];
 
 export default function AdminLayout() {

@@ -63,7 +63,7 @@ public static class UserEndpoints
 
         var stats = await GetStats(db, user.Id);
         return Results.Ok(new UserProfileDto(
-            user.Id, user.Username, user.AvatarUrl, user.Bio, user.DiscordUrl,
+            user.Id, user.Username, user.Email, user.Role, user.AvatarUrl, user.Bio, user.DiscordUrl,
             user.SocialLinks, stats.tournaments, stats.wins, stats.matches));
     }
 
@@ -84,7 +84,7 @@ public static class UserEndpoints
 
         var stats = await GetStats(db, user.Id);
         return Results.Ok(new UserProfileDto(
-            user.Id, user.Username, user.AvatarUrl, user.Bio, user.DiscordUrl,
+            user.Id, user.Username, user.Email, user.Role, user.AvatarUrl, user.Bio, user.DiscordUrl,
             user.SocialLinks, stats.tournaments, stats.wins, stats.matches));
     }
 
@@ -125,7 +125,7 @@ public static class UserEndpoints
 
         return Results.Ok(new PublicProfileResponse(
             new UserProfileDto(
-                user.Id, user.Username, user.AvatarUrl, user.Bio, user.DiscordUrl,
+                user.Id, user.Username, user.Email, user.Role, user.AvatarUrl, user.Bio, user.DiscordUrl,
                 user.SocialLinks, stats.tournaments, stats.wins, stats.matches),
             teams));
     }

@@ -25,6 +25,9 @@ export default [
       route('admin/tournaments', 'features/admin/AdminTournamentsPage.jsx'),
       route('admin/teams', 'features/admin/AdminTeamsPage.jsx'),
       route('admin/disciplines', 'features/admin/AdminDisciplinesPage.jsx'),
+      route('admin/matches', 'features/admin/AdminMatchesPage.jsx'),
+      route('admin/participants', 'features/admin/AdminParticipantsPage.jsx'),
+      route('admin/members', 'features/admin/AdminMembersPage.jsx'),
     ]),
   ]),
 ] satisfies RouteConfig;

@@ -163,10 +163,10 @@ if (app.Environment.IsDevelopment())
     app.MapOpenApi();
     app.MapScalarApiReference(options =>
     {
+        options.ForceThemeMode = ThemeMode.Light;
+
         options
             .WithTitle("ArenaMaster API")
-            .WithTheme(ScalarTheme.Purple)
-            .WithDarkModeToggle(false)
             .WithDefaultHttpClient(ScalarTarget.CSharp, ScalarClient.HttpClient)
             .WithPreferredScheme("bearer");
     });

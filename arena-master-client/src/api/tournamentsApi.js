@@ -4,7 +4,10 @@ export const tournamentsApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
     getTournaments: builder.query({
       query: (params = {}) => {
-        const q = new URLSearchParams(params).toString();
+        const clean = Object.fromEntries(
+          Object.entries(params).filter(([, v]) => v != null && v !== '')
+        );
+        const q = new URLSearchParams(clean).toString();
         return `/tournaments?${q}`;
       },
       providesTags: ['Tournament'],

@@ -35,17 +35,17 @@ export function Header() {
   );
 
   return (
-    <Group h="100%" px="md" justify="space-between" className={styles.header}>
+    <Group h="100%" px="md" justify="space-between" wrap="wrap" className={styles.header}>
       <Group>
-        <Burger opened={opened} onClick={toggle} hiddenFrom="sm" size="sm" color="gray" />
-        <Text component={Link} to="/" className={styles.logo}>
+        <Burger opened={opened} onClick={toggle} hiddenFrom="md" size="sm" color="gray" />
+        <Text component={Link} to="/" className={styles.logo} style={{ whiteSpace: 'nowrap' }}>
           ArenaMaster
         </Text>
-        <Group gap="lg" visibleFrom="sm">
+        <Group gap="lg" visibleFrom="md">
           {links}
         </Group>
       </Group>
-      <Group>
+      <Group gap={4} style={{ flexShrink: 0 }}>
         <ThemeToggle />
         {isAuthenticated && <NotificationBell />}
         {isAuthenticated ? (
@@ -54,6 +54,7 @@ export function Header() {
               variant="subtle"
               component={Link}
               to={`/profile/${user.username}`}
+              size="compact-sm"
               style={{
                 color: 'var(--color-text)',
                 transition: 'all var(--transition-normal)',
@@ -64,6 +65,7 @@ export function Header() {
             <Button
               variant="outline"
               color="purple"
+              size="compact-sm"
               style={{
                 borderColor: 'var(--color-primary)',
                 transition: 'all var(--transition-normal)',
@@ -82,6 +84,7 @@ export function Header() {
               variant="subtle"
               component={Link}
               to="/login"
+              size="compact-sm"
               style={{
                 color: 'var(--color-text)',
                 transition: 'all var(--transition-normal)',
@@ -92,6 +95,7 @@ export function Header() {
             <Button
               component={Link}
               to="/register"
+              size="compact-sm"
               style={{
                 background: 'var(--brand-gradient)',
                 transition: 'all var(--transition-normal)',
@@ -105,7 +109,7 @@ export function Header() {
       <Drawer
         opened={opened}
         onClose={close}
-        hiddenFrom="sm"
+        hiddenFrom="md"
         title={
           <Text className={styles.logo} style={{ fontSize: '1.1rem' }}>
             ArenaMaster

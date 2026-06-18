@@ -181,7 +181,7 @@ public static class TournamentEndpoints
             MaxParticipants = req.MaxParticipants,
             RegistrationEndsAt = req.RegistrationEndsAt.ToUniversalTime(),
             StartsAt = req.StartsAt.ToUniversalTime(),
-            Status = "draft",
+            Status = "registration",
             PrizeDescription = req.PrizeDescription,
             Description = req.Description,
             StreamUrl = req.StreamUrl,

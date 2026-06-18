@@ -1,21 +1,25 @@
 import { Title, Table, Button, TextInput, Group, Stack } from '@mantine/core';
 import { useState } from 'react';
 import { useGetDisciplinesQuery } from '../../api/disciplinesApi';
-import { useCreateDisciplineMutation, useDeleteDisciplineMutation } from '../../api/adminApi';
+import { useCreateDisciplineMutation, useUpdateDisciplineMutation, useDeleteDisciplineMutation } from '../../api/adminApi';
 import { SkeletonCard } from '../../components/ui/SkeletonCard';
+import { ConfirmModal } from '../../components/ui/ConfirmModal';
 
 const tableHeaderStyle = { color: 'var(--color-primary)', borderBottom: '1px solid var(--color-border)' };
 const tableCellStyle = { color: 'var(--color-text)', borderBottom: '1px solid var(--color-border)' };
 const inputStyle = {
   input: { background: 'var(--color-bg)', borderColor: 'var(--color-border)', color: 'var(--color-text)' },
-  inputFocus: { borderColor: 'var(--color-primary)' },
 };
 
 export default function AdminDisciplinesPage() {
   const { data, isLoading } = useGetDisciplinesQuery();
   const [create] = useCreateDisciplineMutation();
+  const [updateDisc] = useUpdateDisciplineMutation();
   const [deleteDisc] = useDeleteDisciplineMutation();
   const [name, setName] = useState('');
+  const [editId, setEditId] = useState(null);
+  const [editName, setEditName] = useState('');
+  const [deleteId, setDeleteId] = useState(null);
 
   if (isLoading) return <SkeletonCard type="table" />;
 
@@ -47,7 +51,29 @@ export default function AdminDisciplinesPage() {
         <Table.Tbody>
           {(data ?? []).map((d) => (
             <Table.Tr key={d.id}>
-              <Table.Td style={tableCellStyle}>{d.name}</Table.Td>
+              <Table.Td style={tableCellStyle}>
+                {d.id === editId ? (
+                  <Group gap="xs">
+                    <TextInput
+                      size="xs"
+                      value={editName}
+                      onChange={(e) => setEditName(e.currentTarget.value)}
+                      styles={inputStyle}
+                    />
+                    <Button
+                      size="xs"
+                      style={{ background: 'var(--color-success)', color: 'white' }}
+                      onClick={() => { updateDisc({ id: d.id, name: editName }); setEditId(null); }}
+                    >
+                      Зберегти
+                    </Button>
+                  </Group>
+                ) : (
+                  <span style={{ cursor: 'pointer' }} onClick={() => { setEditId(d.id); setEditName(d.name); }}>
+                    {d.name}
+                  </span>
+                )}
+              </Table.Td>
               <Table.Td style={tableCellStyle}>{d.slug}</Table.Td>
               <Table.Td style={tableCellStyle}>
                 <Button
@@ -58,7 +84,7 @@ export default function AdminDisciplinesPage() {
                     border: '1px solid var(--color-error)',
                     transition: 'all var(--transition-normal)',
                   }}
-                  onClick={() => deleteDisc(d.id)}
+                  onClick={() => setDeleteId(d.id)}
                 >
                   Видалити
                 </Button>
@@ -67,6 +93,17 @@ export default function AdminDisciplinesPage() {
           ))}
         </Table.Tbody>
       </Table>
+
+      <ConfirmModal
+        opened={!!deleteId}
+        onClose={() => setDeleteId(null)}
+        title="Видалити дисципліну?"
+        message="Ви впевнені, що хочете видалити цю дисципліну?"
+        confirmLabel="Так"
+        cancelLabel="Ні"
+        color="red"
+        onConfirm={() => deleteDisc(deleteId)}
+      />
     </Stack>
   );
 }

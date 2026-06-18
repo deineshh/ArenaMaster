@@ -3,6 +3,8 @@ namespace ArenaMaster.Api.DTOs.User;
 public record UserProfileDto(
     Guid Id,
     string Username,
+    string Email,
+    string Role,
     string? AvatarUrl,
     string? Bio,
     string? DiscordUrl,
