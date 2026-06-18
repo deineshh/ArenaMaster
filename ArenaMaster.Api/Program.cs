@@ -125,6 +125,22 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
+app.UseForwardedHeaders(new ForwardedHeadersOptions
+{
+    ForwardedHeaders = Microsoft.AspNetCore.HttpOverrides.ForwardedHeaders.XForwardedFor | Microsoft.AspNetCore.HttpOverrides.ForwardedHeaders.XForwardedProto,
+    KnownNetworks = { },
+    KnownProxies = { }
+});
+
+if (!app.Environment.IsDevelopment())
+{
+    app.Use((context, next) =>
+    {
+        context.Request.Scheme = "https";
+        return next();
+    });
+}
+
 Directory.CreateDirectory(Path.Combine(app.Environment.ContentRootPath, "uploads"));
 
 using (var scope = app.Services.CreateScope())
@@ -151,7 +167,7 @@ using (var scope = app.Services.CreateScope())
             await Task.Delay(2000);
         }
     }
-    if (app.Environment.IsDevelopment())
+    if (app.Environment.IsDevelopment() || builder.Configuration["SEED"] == "true")
     {
         var unsplash = scope.ServiceProvider.GetRequiredService<UnsplashClient>();
         await DataSeeder.SeedAsync(db, unsplash);
@@ -163,10 +179,10 @@ if (app.Environment.IsDevelopment())
     app.MapOpenApi();
     app.MapScalarApiReference(options =>
     {
-        options.ForceThemeMode = ThemeMode.Light;
-
         options
             .WithTitle("ArenaMaster API")
+            .WithTheme(ScalarTheme.Purple)
+            .WithDarkModeToggle(false)
             .WithDefaultHttpClient(ScalarTarget.CSharp, ScalarClient.HttpClient)
             .WithPreferredScheme("bearer");
     });

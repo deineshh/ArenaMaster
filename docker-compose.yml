@@ -1,17 +1,19 @@
 services:
   db:
     image: postgres:16
+    container_name: arenamaster-db
     environment:
       POSTGRES_DB: arenamaster
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-    ports:
-      - "5432:5432"
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
     volumes:
       - pgdata:/var/lib/postgresql/data
+    networks:
+      - arenamaster-network
+    restart: unless-stopped
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres -d arenamaster"]
-      interval: 2s
+      interval: 10s
       timeout: 5s
       retries: 10
       start_period: 30s
@@ -20,34 +22,63 @@ services:
     build:
       context: ./ArenaMaster.Api
       dockerfile: Dockerfile
-    ports:
-      - "5000:8080"
+    container_name: arenamaster-api
     environment:
-      DATABASE_URL: Host=db;Database=arenamaster;Username=postgres;Password=postgres
-      JWT_SECRET: your-very-long-secret-key-here-min-32-chars
-      JWT_ISSUER: arenamaster.ua
-      JWT_AUDIENCE: arenamaster.ua
-      FRONTEND_URL: http://localhost:5173
-      ASPNETCORE_ENVIRONMENT: Development
+      DATABASE_URL: Host=db;Database=arenamaster;Username=postgres;Password=${DB_PASSWORD}
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_ISSUER: ${JWT_ISSUER}
+      JWT_AUDIENCE: ${JWT_AUDIENCE}
+      FRONTEND_URL: ${FRONTEND_URL}
+      ASPNETCORE_ENVIRONMENT: Production
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
+      DISCORD_CLIENT_ID: ${DISCORD_CLIENT_ID}
+      DISCORD_CLIENT_SECRET: ${DISCORD_CLIENT_SECRET}
+      SMTP_HOST: ${SMTP_HOST}
+      SMTP_PORT: ${SMTP_PORT}
+      SMTP_USER: ${SMTP_USER}
+      SMTP_PASS: ${SMTP_PASS}
+      SEED: "true"
+    volumes:
+      - uploads_data:/app/uploads
     depends_on:
       db:
         condition: service_healthy
-    volumes:
-      - ./ArenaMaster.Api/uploads:/app/uploads
+    networks:
+      - arenamaster-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "curl --fail http://localhost:8080/ || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 60s
 
-  client:
+  frontend:
     build:
       context: ./arena-master-client
       dockerfile: Dockerfile
+      args:
+        VITE_API_URL: ""
+    container_name: arenamaster-frontend
     ports:
-      - "5173:5173"
-    environment:
-      VITE_API_URL: http://localhost:5000
-      VITE_PROXY_URL: http://api:8080
-    volumes:
-      - ./arena-master-client/src:/app/src
+      - "20025:80"
     depends_on:
-      - api
+      api:
+        condition: service_healthy
+    networks:
+      - arenamaster-network
+    restart: unless-stopped
 
 volumes:
   pgdata:
+    driver: local
+  uploads_data:
+    driver: local
+
+networks:
+  arenamaster-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 10.25.0.0/24

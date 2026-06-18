@@ -18,7 +18,6 @@ export const adminApi = baseApi.injectEndpoints({
       query: (id) => ({ url: `/admin/users/${id}`, method: 'DELETE' }),
       invalidatesTags: ['Admin'],
     }),
-
     getAdminTournaments: builder.query({
       query: () => '/admin/tournaments',
       providesTags: ['Admin'],
